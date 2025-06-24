@@ -3,25 +3,21 @@ const { MongoClient } = require('mongodb');
 const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri);
 
-const ADMIN_PASSWORD = "admin123"; 
+// المفتاح السري الذي يجب أن يتطابق مع المفتاح في صفحة المدير
+const SECRET_API_KEY = "THIS_IS_A_VERY_SECRET_KEY_12345"; 
 
 module.exports = async (req, res) => {
     if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Method Not Allowed' });
     }
 
-    const { password } = req.body;
+    // قراءة المفتاح السري من الطلب
+    const { apiKey } = req.body;
 
-    // --- هذا هو التعديل التشخيصي الهام ---
-    // إذا كانت كلمة المرور غير متطابقة، سنقوم بإرجاع الكلمة التي استلمها الخادم
-    if (password !== ADMIN_PASSWORD) {
-        return res.status(401).json({
-            message: "Password mismatch. The server received the following:",
-            received_password: password, // كلمة المرور التي استلمها الخادم
-            expected_password: ADMIN_PASSWORD // كلمة المرور التي كان يتوقعها
-        });
+    // التأكد من صحة المفتاح السري
+    if (apiKey !== SECRET_API_KEY) {
+        return res.status(401).json({ message: 'Unauthorized: Invalid API Key' });
     }
-    // ------------------------------------
 
     try {
         await client.connect();
@@ -33,8 +29,7 @@ module.exports = async (req, res) => {
         console.error("A detailed error occurred:", error);
         res.status(500).json({
             message: "An internal server error occurred.",
-            error_details: error.toString(),
-            error_stack: error.stack 
+            error_details: error.toString()
         });
     } finally {
         if(client) await client.close();
