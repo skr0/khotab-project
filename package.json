@@ -1,0 +1,7 @@
+{
+  "name": "khotab-project",
+  "version": "1.0.0",
+  "dependencies": {
+    "mongodb": "^6.5.0"
+  }
+}
