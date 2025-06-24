@@ -6,7 +6,7 @@
     <title>تسجيل خطب</title>
     <style>
         body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #f8f8f8; padding: 20px 0; }
-        .container { background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 0_ 10px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 600px; }
+        .container { background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 600px; }
         h1 { color: #333; }
         label { display: block; margin-bottom: 8px; color: #555; font-weight: bold; text-align: right; }
         select, input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; text-align: right; }
@@ -15,43 +15,33 @@
         .assignment-block { border: 1px dashed #ccc; padding: 15px; border-radius: 5px; margin-bottom: 15px; }
         #add-assignment-btn { background-color: #28a745; margin-top: 10px; }
         #status-message { margin-top: 20px; font-weight: bold; }
-        .login-link { position: absolute; top: 15px; left: 15px; background: #6c757d; color: white; padding: 8px 12px; text-decoration: none; border-radius: 5px; font-size: 0.9em; }
     </style>
 </head>
 <body>
-    <a href="/admin.html" class="login-link">تسجيل دخول للمدير</a>
     <div class="container">
         <h1>تسجيل خطب جديدة</h1>
         <form id="preacher-form">
             <label for="preacher-select">اختر الخطيب:</label>
             <select id="preacher-select" name="preacher" required>
                 <option value="">-- اختر خطيبًا --</option>
-                <option value="الخطيب الاول">الخطيب الاول</option>
-                <option value="الخطيب الثاني">الخطيب الثاني</option>
-                <option value="الخطيب الثالث">الخطيب الثالث</option>
-                <option value="الخطيب الرابع">الخطيب الرابع</option>
-                <option value="الخطيب الخامس">الخطيب الخامس</option>
+                <option value="طلال عايض عوض العتيبي">طلال عايض عوض العتيبي</option>
+                <option value="راجو">راجو</option>
+                <option value="خطيب ثلاثة">خطيب ثلاثة</option>
             </select>
-            
             <hr style="margin: 20px 0;">
-
-            <div id="assignments-container">
-                </div>
-
+            <div id="assignments-container"></div>
             <button type="button" id="add-assignment-btn"> + إضافة جامع آخر</button>
             <hr style="margin: 20px 0;">
             <button type="submit">إرسال كافة التكليفات</button>
         </form>
         <p id="status-message"></p>
     </div>
-
     <script>
         const assignmentsContainer = document.getElementById('assignments-container');
         const addAssignmentBtn = document.getElementById('add-assignment-btn');
         const form = document.getElementById('preacher-form');
         const statusMessage = document.getElementById('status-message');
         let assignmentCounter = 0;
-
         function createNewAssignmentBlock() {
             assignmentCounter++;
             const block = document.createElement('div');
@@ -60,13 +50,11 @@
                 <h4>تكليف جديد</h4>
                 <label for="mosque-name-${assignmentCounter}">الجامع أو المصلى:</label>
                 <input type="text" id="mosque-name-${assignmentCounter}" class="mosque-name" placeholder="اكتب اسم الجامع هنا" required>
-                
                 <label for="type-${assignmentCounter}">نوع الخطبة:</label>
                 <select id="type-${assignmentCounter}" class="sermon-type">
                     <option value="جمعة">خطبة جمعة</option>
                     <option value="عيد">صلاة عيد</option>
                 </select>
-
                 <label for="dates-${assignmentCounter}">أيام الخطب:</label>
                 <input type="date" class="sermon-date">
                 <input type="date" class="sermon-date">
@@ -75,51 +63,38 @@
             `;
             assignmentsContainer.appendChild(block);
         }
-
         addAssignmentBtn.addEventListener('click', createNewAssignmentBlock);
-        
-        // Create the first block on page load
         createNewAssignmentBlock();
-
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
             statusMessage.textContent = 'الرجاء الانتظار...';
-
             const preacherName = document.getElementById('preacher-select').value;
             if (!preacherName) {
                 statusMessage.textContent = 'الرجاء اختيار اسم الخطيب.';
                 statusMessage.style.color = 'red';
                 return;
             }
-
             const assignments = [];
             const blocks = assignmentsContainer.querySelectorAll('.assignment-block');
-
             blocks.forEach(block => {
                 const mosque = block.querySelector('.mosque-name').value;
                 const type = block.querySelector('.sermon-type').value;
-                const dates = Array.from(block.querySelectorAll('.sermon-date'))
-                                 .map(input => input.value)
-                                 .filter(date => date); // Filter out empty date inputs
-
+                const dates = Array.from(block.querySelectorAll('.sermon-date')).map(input => input.value).filter(date => date);
                 if (mosque && dates.length > 0) {
                     assignments.push({ mosque, type, dates });
                 }
             });
-
             if (assignments.length === 0) {
                 statusMessage.textContent = 'الرجاء إدخال تكليف واحد على الأقل (اسم الجامع وتاريخ).';
                 statusMessage.style.color = 'red';
                 return;
             }
-
             try {
                 const response = await fetch('/api/submit', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ preacher: preacherName, assignments }),
                 });
-
                 if (response.ok) {
                     statusMessage.textContent = 'تم الإرسال بنجاح!';
                     statusMessage.style.color = 'green';
