@@ -3,110 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل خطب</title>
+    <title>لوحة التحكم</title>
     <style>
-        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background-color: #f8f8f8; padding: 20px 0; }
-        .container { background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 600px; }
-        h1 { color: #333; }
-        label { display: block; margin-bottom: 8px; color: #555; font-weight: bold; text-align: right; }
-        select, input { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; text-align: right; }
-        button { background-color: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 1em; transition: background-color 0.3s ease; }
-        button:hover { background-color: #0056b3; }
-        .assignment-block { border: 1px dashed #ccc; padding: 15px; border-radius: 5px; margin-bottom: 15px; }
-        #add-assignment-btn { background-color: #28a745; margin-top: 10px; }
-        #status-message { margin-top: 20px; font-weight: bold; }
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333; padding: 20px; }
+        #dashboard-section { max-width: 900px; margin: 40px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; }
+        .controls { display: flex; gap: 15px; justify-content: center; margin-bottom: 20px; }
+        select, button { padding: 10px; border-radius: 5px; border: 1px solid #ddd; }
+        .accordion-header { background: #007bff; color: white; padding: 15px; cursor: pointer; border-radius: 5px; margin-top: 10px; }
+        .accordion-content { display: none; padding: 15px; border: 1px solid #ddd; border-top: none; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: right; padding: 8px; border-bottom: 1px solid #eee; }
+        #error-message { color: red; text-align: center; font-weight: bold;}
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>تسجيل خطب جديدة</h1>
-        <form id="preacher-form">
-            <label for="preacher-select">اختر الخطيب:</label>
-            <select id="preacher-select" name="preacher" required>
-                <option value="">-- اختر خطيبًا --</option>
-                <option value="طلال عايض عوض العتيبي">طلال عايض عوض العتيبي</option>
-                <option value="راجو">راجو</option>
-                <option value="خطيب ثلاثة">خطيب ثلاثة</option>
-            </select>
-            <hr style="margin: 20px 0;">
-            <div id="assignments-container"></div>
-            <button type="button" id="add-assignment-btn"> + إضافة جامع آخر</button>
-            <hr style="margin: 20px 0;">
-            <button type="submit">إرسال كافة التكليفات</button>
-        </form>
-        <p id="status-message"></p>
+    <div id="dashboard-section">
+        <h1>عرض التسجيلات</h1>
+        <div class="controls">
+            <select id="year-filter"></select>
+            <select id="month-filter"></select>
+        </div>
+        <hr>
+        <div id="dashboard-content"><p>جاري تحميل البيانات...</p></div>
+        <p id="error-message"></p>
     </div>
+
     <script>
-        const assignmentsContainer = document.getElementById('assignments-container');
-        const addAssignmentBtn = document.getElementById('add-assignment-btn');
-        const form = document.getElementById('preacher-form');
-        const statusMessage = document.getElementById('status-message');
-        let assignmentCounter = 0;
-        function createNewAssignmentBlock() {
-            assignmentCounter++;
-            const block = document.createElement('div');
-            block.className = 'assignment-block';
-            block.innerHTML = `
-                <h4>تكليف جديد</h4>
-                <label for="mosque-name-${assignmentCounter}">الجامع أو المصلى:</label>
-                <input type="text" id="mosque-name-${assignmentCounter}" class="mosque-name" placeholder="اكتب اسم الجامع هنا" required>
-                <label for="type-${assignmentCounter}">نوع الخطبة:</label>
-                <select id="type-${assignmentCounter}" class="sermon-type">
-                    <option value="جمعة">خطبة جمعة</option>
-                    <option value="عيد">صلاة عيد</option>
-                </select>
-                <label for="dates-${assignmentCounter}">أيام الخطب:</label>
-                <input type="date" class="sermon-date">
-                <input type="date" class="sermon-date">
-                <input type="date" class="sermon-date">
-                <input type="date" class="sermon-date">
-            `;
-            assignmentsContainer.appendChild(block);
-        }
-        addAssignmentBtn.addEventListener('click', createNewAssignmentBlock);
-        createNewAssignmentBlock();
-        form.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            statusMessage.textContent = 'الرجاء الانتظار...';
-            const preacherName = document.getElementById('preacher-select').value;
-            if (!preacherName) {
-                statusMessage.textContent = 'الرجاء اختيار اسم الخطيب.';
-                statusMessage.style.color = 'red';
-                return;
-            }
-            const assignments = [];
-            const blocks = assignmentsContainer.querySelectorAll('.assignment-block');
-            blocks.forEach(block => {
-                const mosque = block.querySelector('.mosque-name').value;
-                const type = block.querySelector('.sermon-type').value;
-                const dates = Array.from(block.querySelectorAll('.sermon-date')).map(input => input.value).filter(date => date);
-                if (mosque && dates.length > 0) {
-                    assignments.push({ mosque, type, dates });
-                }
-            });
-            if (assignments.length === 0) {
-                statusMessage.textContent = 'الرجاء إدخال تكليف واحد على الأقل (اسم الجامع وتاريخ).';
-                statusMessage.style.color = 'red';
-                return;
-            }
+        const SECRET_API_KEY = "THIS_IS_A_VERY_SECRET_KEY_12345"; // هذا هو "مفتاح" الدخول الجديد
+
+        const yearFilter = document.getElementById('year-filter');
+        const monthFilter = document.getElementById('month-filter');
+        const dashboardContent = document.getElementById('dashboard-content');
+        const errorMessage = document.getElementById('error-message');
+        let allSubmissions = [];
+        const monthNames = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+
+        async function fetchData() {
             try {
-                const response = await fetch('/api/submit', {
+                const response = await fetch('/api/get-submissions', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ preacher: preacherName, assignments }),
+                    body: JSON.stringify({ apiKey: SECRET_API_KEY }) // إرسال المفتاح السري للخادم
                 });
-                if (response.ok) {
-                    statusMessage.textContent = 'تم الإرسال بنجاح!';
-                    statusMessage.style.color = 'green';
-                    form.reset();
-                    assignmentsContainer.innerHTML = '';
-                    createNewAssignmentBlock();
-                } else { throw new Error('فشل الإرسال'); }
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.message || 'فشل تحميل البيانات');
+                }
+                allSubmissions = await response.json();
+                initializeDashboard();
             } catch (error) {
-                statusMessage.textContent = 'حدث خطأ. الرجاء المحاولة مرة أخرى.';
-                statusMessage.style.color = 'red';
+                dashboardContent.innerHTML = '';
+                errorMessage.textContent = `خطأ: ${error.message}`;
             }
-        });
+        }
+
+        function initializeDashboard() {
+            const years = [...new Set(allSubmissions.flatMap(s => s.dates.map(d => new Date(d).getFullYear())))];
+            years.sort((a,b) => b-a).forEach(y => yearFilter.innerHTML += `<option value="${y}">${y}</option>`);
+            monthNames.forEach((m, i) => monthFilter.innerHTML += `<option value="${i}">${m}</option>`);
+            const now = new Date();
+            yearFilter.value = now.getFullYear();
+            monthFilter.value = now.getMonth();
+            yearFilter.addEventListener('change', render);
+            monthFilter.addEventListener('change', render);
+            render();
+        }
+
+        function render() {
+            dashboardContent.innerHTML = '';
+            const year = parseInt(yearFilter.value);
+            const month = parseInt(monthFilter.value);
+            const filtered = allSubmissions.filter(sub => 
+                sub.dates.some(d => new Date(d).getFullYear() === year && new Date(d).getMonth() === month)
+            );
+            if(filtered.length === 0) {
+                dashboardContent.innerHTML = '<p style="text-align:center;">لا توجد تسجيلات لهذا الشهر.</p>';
+                return;
+            }
+            const byPreacher = filtered.reduce((acc, sub) => {
+                acc[sub.preacher] = acc[sub.preacher] || [];
+                const datesInMonth = sub.dates.filter(d => new Date(d).getFullYear() === year && new Date(d).getMonth() === month);
+                if(datesInMonth.length > 0) {
+                     acc[sub.preacher].push({ ...sub, dates: datesInMonth });
+                }
+                return acc;
+            }, {});
+            for (const preacher in byPreacher) {
+                const header = document.createElement('div');
+                header.className = 'accordion-header';
+                header.textContent = preacher;
+                const content = document.createElement('div');
+                content.className = 'accordion-content';
+                const table = document.createElement('table');
+                table.innerHTML = `<thead><tr><th>الجامع/المصلى</th><th>نوع الخطبة</th><th>الأيام</th></tr></thead>`;
+                const tbody = document.createElement('tbody');
+                byPreacher[preacher].forEach(assignment => {
+                    const row = tbody.insertRow();
+                    row.innerHTML = `<td>${assignment.mosque}</td><td>${assignment.type}</td><td>${assignment.dates.map(d => new Date(d).getDate()).join(', ')}</td>`;
+                });
+                table.appendChild(tbody);
+                content.appendChild(table);
+                dashboardContent.appendChild(header);
+                dashboardContent.appendChild(content);
+                header.addEventListener('click', () => {
+                    content.style.display = content.style.display === 'block' ? 'none' : 'block';
+                });
+            }
+        }
+        
+        // جلب البيانات فور تحميل الصفحة
+        fetchData();
     </script>
 </body>
 </html>
